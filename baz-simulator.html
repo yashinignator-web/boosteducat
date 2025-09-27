@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">	
+    <title>ЕГЭ Симулятор</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .task { margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; }
+        .task img { max-width: 100%; height: auto; display: block; margin-bottom: 10px; }
+        .answer-input { width: 100px; padding: 5px; margin-right: 10px; }
+        .check-btn { padding: 5px 15px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .result { margin-top: 10px; font-weight: bold; }
+        .correct { color: green; }
+        .incorrect { color: red; }
+        .timer { font-size: 24px; position: fixed; top: 10px; right: 10px; background: black; color: white; padding: 10px; }
+        .score-panel { 
+            position: fixed; 
+            top: 10px; 
+            left: 10px; 
+            background: #28a745; 
+            color: white; 
+            padding: 10px; 
+            border-radius: 5px;
+            font-size: 18px;
+        }
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px solid #333;
+            background: #f8f9fa;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+        }
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .close {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .payment-option {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .payment-option:hover {
+            background: #f0f0f0;
+        }
+        .ai-recommendations {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4f8;
+            border-radius: 8px;
+        }
+        .payment-link {
+    display: block;
+    margin-top: 15px;
+    padding: 10px;
+    background: #ffcc00;
+    color: #000;
+    text-decoration: none;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+}
+.payment-link:hover {
+    background: #ffdd44;
+}
+    </style>
+</head>
+<body>
+    <div class="score-panel" id="score-panel">Баллы: 0/100</div>
+    <div class="timer" id="timer">03:00:00</div>
+    <h1>Вариант ЕГЭ #<span id="variant-id">1</span></h1>
+    <div id="tasks-container"></div>
+    <button onclick="checkAll()" style="padding: 10px 20px; background: #28a745; color: white; border: none; margin-top: 20px; margin-right: 10px;">Проверить все ответы</button>
+    <button onclick="openPaymentModal()" style="padding: 10px 20px; background: #ff9900; color: white; border: none; margin-top: 20px;">Получить рекомендации ИИ</button>
+    <div id="summary" class="summary" style="display: none;"></div>
+
+    <!-- Модальное окно оплаты -->
+<div id="payment-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closePaymentModal()">&times;</span>
+        <h2>Оплата анализа результатов</h2>
+        <p>Для получения персональных рекомендаций от ИИ необходимо оплатить анализ ваших результатов.</p>
+        
+        <div class="payment-option" onclick="selectPayment('cloudtips')">
+            <h3>💰 CloudTips (ЮMoney)</h3>
+            <p>Оплата через CloudTips - 100 рублей</p>
+        </div>
+
+        <div id="cloudtips-payment" style="display: none; margin-top: 15px;">
+            <a href="https://pay.cloudtips.ru/p/ca9949df" class="payment-link" target="_blank" onclick="startPaymentCheck()" 
+               style="display: block; padding: 10px; background: #ffcc00; color: #000; text-decoration: none; border-radius: 4px; text-align: center; font-weight: bold;">
+    💳 Перейти к оплате через CloudTips
+            </a>
+            <p style="font-size: 12px; margin-top: 10px;">После оплаты вернитесь на эту страницу</p>
+            <button onclick="checkPaymentStatus()" style="margin-top: 10px; padding: 8px 16px; background: #28a745; color: white; border: none;">
+                Я оплатил(а), проверить статус
+            </button>
+        </div>
+        
+        <div id="payment-status"></div>
+    </div>
+</div>
+
+    <!-- Модальное окно рекомендаций ИИ -->
+    <div id="ai-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAiModal()">&times;</span>
+            <h2>Рекомендации от ИИ</h2>
+            <div id="ai-recommendations-content" class="ai-recommendations">
+                <p>Идет анализ ваших результатов...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Система оценивания (первичные баллы за каждое задание)
+        const scoringSystem = {
+            1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1, 10: 1,
+            11: 1, 12: 1, 13: 1, 14: 1, 15: 1, 16: 1, 17: 1, 18: 1, 19: 1, 20: 1,
+            21: 2 // Последнее задание обычно оценивается выше
+        };
+
+        // База заданий
+        const tasksDatabase = {
+            "1": [
+                { id: 1, image: "./image/1.png", answer: "6", solution: "6 (но в демке 7, исправлено)" },
+                { id: 2, image: "./image/1.1.png", answer: "520", solution: "" },
+                { id: 3, image: "./image/1.2.png", answer: "12", solution: "" },
+                { id: 4, image: "./image/1.3.png", answer: "6", solution: "" }
+            ],
+            "2": [
+                { id: 1, image: "./image/2.png", answer: "3412", solution: "А: 365 дней, Б: 15.8 сек, В: 15 часов, Г: 1.5 часа" },
+                { id: 2, image: "./image/2.1.png", answer: "4123", solution: "" }
+            ],
+            "3": [
+                { id: 1, image: "./image/3.png", answer: "24", solution: "" },
+                { id: 2, image: "./image/3.1.png", answer: "3", solution: "" },
+                { id: 3, image: "./image/3.2.png", answer: "12200", solution: "" }
+            ],
+            "4": [
+                { id: 1, image: "./image/4.png", answer: "25", solution: "" },
+                { id: 2, image: "./image/4.1.png", answer: "9", solution: "" },
+                { id: 3, image: "./image/4.2.png", answer: "41", solution: "" }
+            ],
+            "5": [
+                { id: 1, image: "./image/5.png", answer: "0.25", solution: "" },
+                { id: 2, image: "./image/5.1.png", answer: "0.4", solution: "" },
+                { id: 3, image: "./image/5.2.png", answer: "0.36", solution: "" }
+            ],
+            "6": [
+                { id: 1, image: "./image/6.png", answer: "15 ", solution: "" },
+                { id: 2, image: "./image/6.1.png", answer: "15", solution: "" },
+                { id: 3, image: "./image/6.2.png", answer: "192000", solution: "" }
+            ],
+            "7": [
+                { id: 1, image: "./image/7.png", answer: "2143", solution: "" },
+                { id: 2, image: "./image/7.1.png", answer: "4312", solution: "" },
+                { id: 3, image: "./image/7.2.png", answer: "2143", solution: "" }
+            ],
+            "8": [
+                { id: 1, image: "./image/8.png", answer: "14", solution: "" },
+                { id: 2, image: "./image/.8.1.png", answer: "12", solution: "" }
+            ],
+            "9": [
+                { id: 1, image: "./image/9.png", answer: "3", solution: "" },
+                { id: 2, image: "./image/9.1.png", answer: "27", solution: "" }
+            ],
+            "10": [
+                { id: 1, image: "./image/10.png", answer: "1420", solution: "" },
+                { id: 2, image: "./image/10.1.png", answer: "15", solution: "" },
+                { id: 3, image: "./image/10.2.png", answer: "177", solution: "" }
+            ],
+            "11": [
+                { id: 1, image: "./image/11.png", answer: "24500", solution: "" },
+                { id: 2, image: "./image/11.1.png", answer: "18", solution: "" },
+                { id: 3, image: "./image/11.2.png", answer: "60", solution: "" },
+                { id: 4, image: "./image/11.3.png", answer: "9", solution: "" }
+            ],
+            "12": [
+                { id: 1, image: "./image/12.png", answer: "12", solution: "" },
+                { id: 2, image: "./image/12.1.png", answer: "4", solution: "" },
+                { id: 3, image: "./image/12.2.png", answer: "4", solution: "" },
+                { id: 4, image: "./image/12.3.png", answer: "24", solution: "" }
+            ],
+            "13": [
+                { id: 1, image: "./image/13.png", answer: "270", solution: "" },
+                { id: 2, image: "./image/13.1.png", answer: "360", solution: "" },
+                { id: 3, image: "./image/13.2.png", answer: "2", solution: "" },
+                { id: 4, image: "./image/13.3.png", answer: "8", solution: "" },
+                
+            ],
+            "14": [
+                { id: 1, image: "./image/14.png", answer: "24.7", solution: "" },
+                { id: 2, image: "./image/14.1.png", answer: "0.5", solution: "" },
+                { id: 3, image: "./image/14.2.png", answer: "4", solution: "" }
+            ],
+            "15": [
+                { id: 1, image: "./image/15.png", answer: "297", solution: "" },
+                { id: 2, image: "./image/15.1.png", answer: "25", solution: "" },
+                { id: 3, image: "./image/15.2.png", answer: "28", solution: "" },
+                { id: 4, image: "./image/15.3.png", answer: "10260", solution: "" }
+            ],
+            "16": [
+                { id: 1, image: "./image/16.png", answer: "1.5", solution: "" },
+                { id: 2, image: "./image/16.1.png", answer: "13", solution: "" },
+                { id: 3, image: "./image/16.2.png", answer: "14", solution: "" },
+                { id: 4, image: "./image/16.3.png", answer: "2", solution: "" }
+            ],
+            "17": [
+                { id: 1, image: "./image/17.png", answer: "5", solution: "" },
+                { id: 2, image: "./image/17.1.png", answer: "1", solution: "" },
+                { id: 3, image: "./image/17.2.png", answer: "9", solution: "" },
+                { id: 4, image: "./image/17.3.png", answer: "4", solution: "" }
+  
+            ],
+            "18": [
+                { id: 1, image: "./image/18.png", answer: "1243", solution: "" },
+                { id: 2, image: "./image/18.1.png", answer: "2143", solution: "" },
+                { id: 3, image: "./image/18.2.png", answer: "3421", solution: "" }
+            ],
+            "19": [
+                { id: 1, image: "./image/19.png", answer: "242", solution: "" },
+                { id: 2, image: "./image/19.1.png", answer: "390", solution: "" },
+                { id: 3, image: "./image/19.2.png", answer: "1375", solution: "" },
+                { id: 4, image: "./image/19.3.png", answer: "45342", solution: "" }
+            ],
+            "20": [
+                { id: 1, image: "./image/20.png", answer: "4", solution: "" },
+                { id: 2, image: "./image/20.1.png", answer: "30", solution: "" },
+                { id: 3, image: "./image/20.2.png", answer: "50", solution: "" },
+                { id: 4, image: "./image/20.3.png", answer: "250", solution: "" }
+            ],
+            "21": [
+                { id: 1, image: "./image/21.png", answer: "21", solution: "" },
+                { id: 2, image: "./image/21.1.png", answer: "12", solution: "" },
+                { id: 3, image: "./image/21.2.png", answer: "37", solution: "" },
+                { id: 4, image: "./image/21.3.png", answer: "19", solution: "" }
+            ]
+        };
+
+        let currentVariant = {};
+        let userAnswers = {};
+        let correctAnswers = {};
+        let totalScore = 0;
+        let timerInterval;
+        let paymentChecked = false; // ← ДОБАВЬ ЭТУ СТРОЧКУ ЗДЕСЬ
+
+        // Генерация варианта
+        function generateVariant() {
+            const variant = {};
+            for (let taskNumber = 1; taskNumber <= 21; taskNumber++) {
+                const tasks = tasksDatabase[taskNumber];
+                if (tasks && tasks.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * tasks.length);
+                    variant[taskNumber] = {...tasks[randomIndex]};
+                } else {
+                    variant[taskNumber] = { 
+                        error: "Задание временно недоступно",
+                        answer: "N/A" 
+                    };
+                }
+            }
+            return variant;
+        }
+
+        // Отображение варианта
+        function renderVariant() {
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= 21; i++) {
+                const task = currentVariant[i];
+                const taskDiv = document.createElement('div');
+                taskDiv.className = 'task';
+                
+                if (task.error) {
+                    taskDiv.innerHTML = `<h3>Задание ${i} (${scoringSystem[i]} балл)</h3><p>${task.error}</p>`;
+                } else {
+                    taskDiv.innerHTML = `
+                        <h3>Задание ${i} (${scoringSystem[i]} ${scoringSystem[i] === 1 ? 'балл' : 'балла'})</h3>
+                        <img src="${task.image}" alt="Задание ${i}">
+                        <input type="text" class="answer-input" id="answer-${i}" placeholder="Ответ">
+                        <button class="check-btn" onclick="checkAnswer(${i})">Проверить</button>
+                        <div class="result" id="result-${i}"></div>
+                    `;
+                }
+                
+                container.appendChild(taskDiv);
+            }
+        }
+
+        // Проверка одного ответа
+        function checkAnswer(taskNumber) {
+            const userAnswer = document.getElementById(`answer-${taskNumber}`).value.trim();
+            const correctAnswer = currentVariant[taskNumber].answer;
+            const resultDiv = document.getElementById(`result-${taskNumber}`);
+            
+            userAnswers[taskNumber] = userAnswer;
+            
+            if (userAnswer === correctAnswer) {
+                resultDiv.innerHTML = '✅ Верно!';
+                resultDiv.className = 'result correct';
+                if (!correctAnswers[taskNumber]) {
+                    totalScore += scoringSystem[taskNumber];
+                    correctAnswers[taskNumber] = true;
+                    updateScore();
+                }
+            } else {
+                resultDiv.innerHTML = `❌ Неверно! Правильный ответ: ${correctAnswer}`;
+                resultDiv.className = 'result incorrect';
+                if (correctAnswers[taskNumber]) {
+                    totalScore -= scoringSystem[taskNumber];
+                    delete correctAnswers[taskNumber];
+                    updateScore();
+                }
+            }
+        }
+
+        // Обновление счета
+        function updateScore() {
+            document.getElementById('score-panel').textContent = `Баллы: ${totalScore}/100`;
+        }
+
+        // Проверка всех ответов
+        function checkAll() {
+            for (let i = 1; i <= 21; i++) {
+                if (document.getElementById(`answer-${i}`)) {
+                    checkAnswer(i);
+                }
+            }
+            showSummary();
+        }
+
+        // Показать итоговую статистику
+        function showSummary() {
+            const summaryDiv = document.getElementById('summary');
+            let correctCount = Object.keys(correctAnswers).length;
+            let maxPossible = Object.keys(scoringSystem).reduce((sum, key) => sum + scoringSystem[key], 0);
+            
+            summaryDiv.innerHTML = `
+                <h2>Итоговые результаты</h2>
+                <p>Правильных ответов: ${correctCount} из 21</p>
+                <p>Первичный балл: ${totalScore} из ${maxPossible}</p>
+                <p>Тестовый балл (примерно): ${calculateTestScore(totalScore)} из 100</p>
+                <h3>Детализация:</h3>
+                <ul>
+                    ${Object.keys(userAnswers).map(task => `
+                        <li>Задание ${task}: ${userAnswers[task]} 
+                            ${correctAnswers[task] ? '✅' : '❌'} 
+                            ${!correctAnswers[task] ? `(Правильно: ${currentVariant[task].answer})` : ''}
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            summaryDiv.style.display = 'block';
+        }
+
+        // Конвертация первичных баллов в тестовые (упрощенная формула)
+        function calculateTestScore(primaryScore) {
+            // Примерная конвертация для ЕГЭ по математике
+            if (primaryScore <= 5) return primaryScore * 6;
+            if (primaryScore <= 12) return 30 + (primaryScore - 5) * 2;
+            if (primaryScore <= 18) return 44 + (primaryScore - 12) * 3;
+            return 62 + Math.min(38, (primaryScore - 18) * 2.5);
+        }
+
+        // Таймер
+        function startTimer() {
+            let timeLeft = 3 * 60 * 60;
+            const timerDiv = document.getElementById('timer');
+            
+            timerInterval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    checkAll();
+                    alert('Время вышло! Проверка ответов завершена.');
+                    return;
+                }
+                
+                const hours = Math.floor(timeLeft / 3600);
+                const minutes = Math.floor((timeLeft % 3600) / 60);
+                const seconds = timeLeft % 60;
+                
+                timerDiv.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                timeLeft--;
+            }, 1000);
+        }
+
+        // Функции для работы с модальными окнами
+        function openPaymentModal() {
+            document.getElementById('payment-modal').style.display = 'block';
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').style.display = 'none';
+        }
+
+        function openAiModal() {
+            document.getElementById('ai-modal').style.display = 'block';
+        }
+
+        function closeAiModal() {
+            document.getElementById('ai-modal').style.display = 'none';
+        }
+
+        // Обработка оплаты
+        function processPayment(method) {
+            const statusDiv = document.getElementById('payment-status');
+            statusDiv.innerHTML = '<p>Обработка платежа...</p>';
+            
+            // Эмуляция процесса оплаты
+            setTimeout(() => {
+                statusDiv.innerHTML = '<p style="color: green;">✅ Оплата прошла успешно!</p>';
+                
+                // Закрываем окно оплаты и открываем окно с рекомендациями
+                setTimeout(() => {
+                    closePaymentModal();
+                    openAiModal();
+                    getAIRecommendations();
+                }, 1500);
+            }, 2000);
+        }
+
+        // Получение рекомендаций от ИИ
+        function getAIRecommendations() {
+            const recommendationsDiv = document.getElementById('ai-recommendations-content');
+            recommendationsDiv.innerHTML = '<p>Анализируем ваши результаты...</p>';
+            
+            // Подготовка данных для отправки в ИИ
+            const dataToSend = {
+                userAnswers: userAnswers,
+                correctAnswers: correctAnswers,
+                totalScore: totalScore,
+                testScore: calculateTestScore(totalScore),
+                variantId: document.getElementById('variant-id').textContent
+            };
+            
+            // Эмуляция запроса к ИИ
+            setTimeout(() => {
+                // В реальном приложении здесь был бы запрос к API ИИ
+                const recommendations = generateAIRecommendations(dataToSend);
+                recommendationsDiv.innerHTML = recommendations;
+            }, 3000);
+        }
+
+        // Генерация рекомендаций от ИИ (заглушка)
+        function generateAIRecommendations(data) {
+            const weakAreas = [];
+            
+            // Анализ ошибок
+            for (let i = 1; i <= 21; i++) {
+                if (!data.correctAnswers[i] && data.userAnswers[i]) {
+                    weakAreas.push(i);
+                }
+            }
+            
+            let recommendations = `<h3>Ваш результат: ${data.testScore} тестовых баллов</h3>`;
+            
+            if (weakAreas.length > 0) {
+                recommendations += `<p>Вам стоит обратить внимание на следующие темы:</p>`;
+                recommendations += `<ul>`;
+                weakAreas.forEach(task => {
+                    recommendations += `<li>Задание ${task} - ${getTopicByTask(task)}</li>`;
+                });
+                recommendations += `</ul>`;
+                
+                recommendations += `<p>Рекомендуем повторить:</p>`;
+                recommendations += `<ul>`;
+                weakAreas.slice(0, 3).forEach(task => {
+                    recommendations += `<li>${getStudyMaterials(task)}</li>`;
+                });
+                recommendations += `</ul>`;
+            } else {
+                recommendations += `<p>Отличный результат! Вы успешно справились со всеми заданиями.</p>`;
+            }
+            
+            recommendations += `<p>Для улучшения результата рекомендуем:</p>`;
+            recommendations += `<ul>`;
+            recommendations += `<li>Регулярно практиковаться с таймером</li>`;
+            recommendations += `<li>Разбирать ошибки после каждого теста</li>`;
+            recommendations += `<li>Повторить сложные темы: ${weakAreas.slice(0, 2).map(t => getTopicByTask(t)).join(', ')}</li>`;
+            recommendations += `</ul>`;
+            
+            return recommendations;
+        }
+
+        // Вспомогательные функции для генерации рекомендаций
+        function getTopicByTask(taskNumber) {
+            const topics = {
+                1: "Анализ графиков и диаграмм",
+                2: "Построение и исследование математических моделей",
+                3: "Планиметрия: вычисление площадей",
+                4: "Теория вероятностей",
+                5: "Решение уравнений",
+                6: "Производная и ее применение",
+                7: "Стереометрия",
+                8: "Задачи с физическим содержанием",
+                9: "Выражения и преобразования",
+                10: "Задачи на прогрессии"
+                // Добавьте остальные задания по необходимости
+            };
+            return topics[taskNumber] || `Задание №${taskNumber}`;
+        }
+
+        function getStudyMaterials(taskNumber) {
+            const materials = {
+                1: "Разбор заданий на анализ графиков (учебник стр. 45-62)",
+                2: "Моделирование реальных ситуаций (пособие 'Реальные задачи')",
+                3: "Планиметрия: формулы площадей (сборник задач, раздел 3)",
+                4: "Теория вероятностей на примерах (online курсы)",
+                5: "Решение различных типов уравнений (методичка №2)"
+                // Добавьте остальные материалы по необходимости
+            };
+            return materials[taskNumber] || `Общие материалы для подготовки к заданию ${taskNumber}`;
+        }
+
+        // Инициализация
+        function init() {
+            currentVariant = generateVariant();
+            document.getElementById('variant-id').textContent = Math.floor(Math.random() * 1000) + 1;
+            renderVariant();
+            startTimer();
+            updateScore();
+        }
+
+        // Запускаем всё
+        init();
+    // ВЫБОР СПОСОБА ОПЛАТЫ - ПОКАЗЫВАЕТ БЛОК С ССЫЛКОЙ НА CLOUDTIPS
+function selectPayment(method) {
+    if (method === 'cloudtips') {
+        document.getElementById('cloudtips-payment').style.display = 'block';
+    }
+}
+
+// НАЧАЛО ПРОВЕРКИ ОПЛАТЫ - ВЫЗЫВАЕТСЯ ПРИ КЛИКЕ НА ССЫЛКУ ОПЛАТЫ
+function startPaymentCheck() {
+    const statusDiv = document.getElementById('payment-status');
+    statusDiv.innerHTML = '<p>Ожидание оплаты...</p>';
+}
+
+// ПРОВЕРКА СТАТУСА ОПЛАТЫ - ВЫЗЫВАЕТСЯ ПОСЛЕ ОПЛАТЫ ПО КНОПКЕ
+function checkPaymentStatus() {
+    const statusDiv = document.getElementById('payment-status');
+    statusDiv.innerHTML = '<p>Проверяем статус оплаты...</p>';
+    
+    // Эмуляция проверки оплаты - ВСЕГДА false для теста
+    setTimeout(() => {
+        const isPaymentSuccessful = false; // ← ВРЕМЕННО ВСЕГДА false
+        
+        if (isPaymentSuccessful) {
+            paymentChecked = true;
+            statusDiv.innerHTML = '<p style="color: green;">✅ Оплата подтверждена!</p>';
+            
+            setTimeout(() => {
+                closePaymentModal();
+                openAiModal();
+                getAIRecommendations();
+            }, 1500);
+        } else {
+            paymentChecked = false;
+            statusDiv.innerHTML = '<p style="color: red;">❌ Оплата не найдена. Перейдите по ссылке и оплатите, затем нажмите "Проверить статус"</p>';
+        }
+    }, 2000);
+
+}</script>
+</body>
+</html>
