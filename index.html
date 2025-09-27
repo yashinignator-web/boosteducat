@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Математические симуляторы - Главная страница</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #166088;
+            --accent-basic: #4caf50;
+            --accent-pro: #ff6b00;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ee 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 0;
+            flex: 1;
+        }
+        
+        .intro {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 0 1rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+        
+        .intro p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            color: #555;
+        }
+        
+        .simulator-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .option-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option-card:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+        }
+        
+        .option-card.basic:before {
+            background: linear-gradient(90deg, var(--accent-basic), #81c784);
+        }
+        
+        .option-card.pro:before {
+            background: linear-gradient(90deg, var(--accent-pro), #ff9e40);
+        }
+        
+        .option-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .basic .card-icon {
+            color: var(--accent-basic);
+        }
+        
+        .pro .card-icon {
+            color: var(--accent-pro);
+        }
+        
+        .option-card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+        
+        .option-card p {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-basic {
+            background: linear-gradient(135deg, var(--accent-basic), #66bb6a);
+            color: white;
+        }
+        
+        .btn-basic:hover {
+            background: linear-gradient(135deg, #43a047, var(--accent-basic));
+            color: white;
+        }
+        
+        .btn-pro {
+            background: linear-gradient(135deg, var(--accent-pro), #ff8c1a);
+            color: white;
+        }
+        
+        .btn-pro:hover {
+            background: linear-gradient(135deg, #e65100, var(--accent-pro));
+            color: white;
+        }
+        
+        .links-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+        
+        .card-link {
+            color: #555;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        
+        .card-link:hover {
+            color: var(--primary);
+        }
+        
+        .basic .card-link:hover {
+            color: var(--accent-basic);
+        }
+        
+        .pro .card-link:hover {
+            color: var(--accent-pro);
+        }
+        
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 4rem;
+        }
+        
+        .feature {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .footer-link {
+            color: #aaa;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-link:hover {
+            color: white;
+        }
+
+        /* Стили для модальных окон */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            right: 20px;
+            top: 15px;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+        
+        @media (max-width: 768px) {
+            .simulator-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .option-card {
+                width: 100%;
+            }
+            
+            .features {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .feature {
+                width: 100%;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .modal-content {
+                margin: 20% auto;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">MathSim</div>
+        <div class="tagline">Платформа для практики математических навыков базового и профильного уровня</div>
+    </header>
+    
+    <div class="container">
+        <section class="intro">
+            <h1>Выберите симулятор математики</h1>
+            <p>Практикуйтесь в решении задач различного уровня сложности. От базовых вычислений до сложных профильных задач.</p>
+            
+            <div class="simulator-options">
+                <div class="option-card basic">
+                    <div class="card-icon"><i class="fas fa-calculator"></i></div>
+                    <h2>Базовая математика</h2>
+                    <p>Основные математические концепции, арифметические операции, простые уравнения и геометрические задачи. Идеально для начинающих и повторения основ.</p>
+                    <a href="baz-simulator.html" class="btn btn-basic">Перейти к базовому симулятору</a>
+                    
+                    <div class="links-container">
+                        <a href="#basic-info" class="card-link">
+                            <i class="fas fa-info-circle"></i> О базовом уровне
+                        </a>
+                        <a href="#basic-examples" class="card-link">
+                            <i class="fas fa-list-alt"></i> Примеры задач
+                        </a>
+                        <a href="#basic-prepare" class="card-link">
+                            <i class="fas fa-graduation-cap"></i> Как подготовиться
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="option-card pro">
+                    <div class="card-icon"><i class="fas fa-square-root-alt"></i></div>
+                    <h2>Профильная математика</h2>
+                    <p>Сложные задачи, продвинутая алгебра, математический анализ, теория вероятностей. Для тех, кто готовится к экзаменам и олимпиадам.</p>
+                    <a href="pro-simulator.html" class="btn btn-pro">Перейти к профильному симулятору</a>
+                    
+                    <div class="links-container">
+                        <a href="#pro-info" class="card-link">
+                            <i class="fas fa-info-circle"></i> О профильном уровне
+                        </a>
+                        <a href="#pro-examples" class="card-link">
+                            <i class="fas fa-list-alt"></i> Примеры задач
+                        </a>
+                        <a href="#pro-prepare" class="card-link">
+                            <i class="fas fa-graduation-cap"></i> Как подготовиться
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="features">
+            <div class="feature">
+                <div class="feature-icon"><i class="fas fa-check-circle"></i></div>
+                <h3>Интерактивные задачи</h3>
+                <p>Решайте задачи с мгновенной проверкой и пояснениями</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon"><i class="fas fa-chart-line"></i></div>
+                <h3>Отслеживание прогресса</h3>
+                <p>Наблюдайте за своим улучшением с помощью статистики</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon"><i class="fas fa-sliders-h"></i></div>
+                <h3>Адаптивная сложность</h3>
+                <p>Задачи подстраиваются под ваш уровень подготовки</p>
+            </div>
+        </section>
+    </div>
+    
+    <footer>
+        <p>© 2023 MathSim - Платформа для практики математики</p>
+        <div class="footer-links">
+            <a href="#" onclick="openModal('about-modal'); return false;" class="footer-link">О проекте</a>
+            <a href="#" onclick="openModal('contacts-modal'); return false;" class="footer-link">Контакты</a>
+            <a href="#" onclick="openModal('help-modal'); return false;" class="footer-link">Помощь</a>
+            <a href="#" onclick="openModal('reviews-modal'); return false;" class="footer-link">Отзывы</a>
+        </div>
+    </footer>
+    
+    <!-- Модальные окна для футера -->
+    <div id="about-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('about-modal')">&times;</span>
+            <h2>О проекте MathSim</h2>
+            <p>Платформа для подготовки к ЕГЭ по математике с симулятором экзамена и ИИ-рекомендациями</p>
+            <p>• Реальные варианты заданий ЕГЭ</p>
+            <p>• Таймер как на настоящем экзамене</p>
+            <p>• Персональные ИИ-рекомендации после оплаты</p>
+            <p>• Адаптивная система подбора заданий</p>
+        </div>
+    </div>
+
+    <div id="contacts-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('contacts-modal')">&times;</span>
+            <h2>Контакты</h2>
+            <p>📧 Email:zhai@list.ru</p>
+            <p>📞 Телефон: +7 (911) 600-44-55</p>
+            <p>🕐 Техническая поддержка: 24/7</p>
+            <p>💬 MAX: https://clck.ru/3NzCgt</p>
+        </div>
+    </div>
+
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('help-modal')">&times;</span>
+            <h2>Помощь</h2>
+            <p><strong>Как пользоваться симулятором:</strong></p>
+            <p>1. Решайте задания по порядку или в произвольном порядке</p>
+            <p>2. Следите за таймером в правом верхнем углу</p>
+            <p>3. Нажмите "Проверить все ответы" для получения результатов</p>
+            <p>4. Для получения персональных рекомендаций - оплатите анализ через CloudTips</p>
+            <p>5. После оплаты нажмите "Проверить статус" и получите ИИ-анализ</p>
+        </div>
+    </div>
+
+    <div id="reviews-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('reviews-modal')">&times;</span>
+            <h2>Отзывы</h2>
+            <div style="background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                <p><strong>Иван, Москва:</strong> "Лучший симулятор ЕГЭ! Реальные задания, спасли мне экзамен"</p>
+            </div>
+            <div style="background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                <p><strong>Мария, СПб:</strong> "ИИ-рекомендации очень точные, указали именно на мои слабые места"</p>
+            </div>
+            <div style="background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                <p><strong>Алексей, Казань:</strong> "Таймер и атмосфера как на реальном экзамене - это бесценно"</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Функции для модальных окон
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
